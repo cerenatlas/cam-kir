@@ -4,7 +4,7 @@
   "private": true,
   "main": "server.js",
   "scripts": { "start": "node server.js" },
-  "engines": { "node": ">=20.6" },
+  "engines": { "node": ">=20" },
   "dependencies": {
     "express": "^4.19.2",
     "tiktok-live-connector": "^1.2.3",
