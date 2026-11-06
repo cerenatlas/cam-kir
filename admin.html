@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CAMI KIR – Yönetici</title>
+<style>
+body{margin:0;padding:14px;font-family:system-ui,sans-serif;background:#0b0620;color:#eee;max-width:760px;margin:auto}
+h1{font-size:20px;color:#ff3df2}h2{font-size:14px;color:#3dd5ff;margin:0 0 8px}
+.c{background:#171033;border:1px solid #9b5cff55;border-radius:12px;padding:12px;margin:10px 0}
+button{background:linear-gradient(90deg,#9b5cff,#ff3df2);border:0;color:#fff;padding:9px 14px;border-radius:8px;font-weight:700;margin:3px 3px 3px 0}
+button.g{background:#2b2160}
+input,textarea,select{background:#0b0620;color:#fff;border:1px solid #9b5cff88;border-radius:6px;padding:8px;width:100%;box-sizing:border-box;margin:3px 0}
+.r{display:flex;gap:8px;align-items:center}.r>*{flex:1}label{font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:4px;border-bottom:1px solid #fff2;text-align:left}
+.bar{height:12px;background:#000;border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#3dd5ff,#ff3df2)}
+</style></head><body>
+<h1>🔨 CAMI KIR! – Yönetici Paneli</h1>
+<div class="c"><h2>Durum</h2><div id="stat"></div><div class="bar"><i id="hpb"></i></div>
+ <div class="r" style="margin-top:8px"><button id="run" onclick="act('running',{running:!S.config.running})"></button><button class="g" onclick="act('reset-glass')">Camı sıfırla</button></div></div>
+<div class="c"><h2>TikTok bağlantısı</h2><div class="r"><input id="user" placeholder="yayıncı kullanıcı adı (@ olmadan)"><button onclick="saveUser()">Kaydet ve bağlan</button></div>
+ <button class="g" onclick="act('connect')">Yeniden bağlan</button></div>
+<div class="c"><h2>Cam dayanıklılığı</h2><div class="r"><input id="hp" type="number" min="1"><button onclick="cfg({maxHp:+hp.value})">Uygula</button></div></div>
+<div class="c"><h2>Hediye puanları (her satır: isim=puan)</h2>
+ <textarea id="gifts" rows="6"></textarea><label>Listede olmayan hediye: elmas × <input id="mult" type="number" step="0.1" style="width:80px;display:inline"></label>
+ <button onclick="saveGifts()">Kaydet</button></div>
+<div class="c"><h2>Efektler</h2>
+ <label><input type="checkbox" id="e_shake" style="width:auto" onchange="saveFx()"> Ekran sarsıntısı</label>
+ <label><input type="checkbox" id="e_particles" style="width:auto" onchange="saveFx()"> Parçacıklar</label>
+ <label><input type="checkbox" id="e_flash" style="width:auto" onchange="saveFx()"> Flaş</label></div>
+<div class="c"><h2>Test hediyesi</h2><div class="r"><input id="tu" value="Test"><select id="tg"></select><input id="tc" type="number" value="1" min="1"></div>
+ <button onclick="act('test-gift',{user:tu.value,gift:tg.value,count:+tc.value})">Gönder</button>
+ <small>Sadece arayüz denemesi içindir; gerçek TikTok hediyesi değildir.</small></div>
+<div class="c"><h2>Puanlar</h2><button class="g" onclick="confirm('Liderlik tablosu sıfırlansın mı?')&&act('reset-board')">Liderlik tablosunu sıfırla</button>
+ <table id="tb"></table></div>
+<script>
+const $=id=>document.getElementById(id);let S=null,init=false;
+const api=(p,b)=>fetch('/api/'+p,{method:b?'POST':'GET',headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined}).then(r=>r.json());
+const act=(p,b)=>api(p,b||{}).then(load),cfg=b=>act('config',b);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function saveUser(){cfg({username:$('user').value})}
+function saveGifts(){const g={};$('gifts').value.split('\n').forEach(l=>{const [k,v]=l.split('=');if(k&&v!=null&&!isNaN(+v))g[k.trim()]=+v});cfg({gifts:g,fallbackMultiplier:+$('mult').value})}
+function saveFx(){cfg({effects:{shake:$('e_shake').checked,particles:$('e_particles').checked,flash:$('e_flash').checked}})}
+async function load(){S=await api('state');const c=S.config;
+ $('stat').textContent=`TikTok: ${S.status} • Cam: ${S.hp}/${c.maxHp} • Kırılan cam: ${S.breaks} • Oyun: ${c.running?'ÇALIŞIYOR':'DURDU'}`;
+ $('hpb').style.width=Math.max(0,S.hp/c.maxHp*100)+'%';$('run').textContent=c.running?'⏸ Oyunu durdur':'▶ Oyunu başlat';
+ if(!init){init=true;$('user').value=c.username;$('hp').value=c.maxHp;$('mult').value=c.fallbackMultiplier;
+  $('gifts').value=Object.entries(c.gifts).map(([k,v])=>k+'='+v).join('\n');
+  for(const k in c.effects)$('e_'+k).checked=c.effects[k];
+  $('tg').innerHTML=Object.keys(c.gifts).map(k=>`<option>${esc(k)}</option>`).join('')}
+ $('tb').innerHTML='<tr><th>#</th><th>Kullanıcı</th><th>Puan</th></tr>'+S.scores.map((s,i)=>`<tr><td>${i+1}</td><td>${esc(s.name)}</td><td>${s.points}</td></tr>`).join('')}
+load();setInterval(load,3000);
+</script></body></html>
