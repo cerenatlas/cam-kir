@@ -1,0 +1,13 @@
+{
+  "name": "camikir",
+  "version": "1.0.0",
+  "private": true,
+  "main": "server.js",
+  "scripts": { "start": "node --env-file=.env server.js" },
+  "engines": { "node": ">=20.6" },
+  "dependencies": {
+    "express": "^4.19.2",
+    "tiktok-live-connector": "^1.2.3",
+    "ws": "^8.18.0"
+  }
+}
